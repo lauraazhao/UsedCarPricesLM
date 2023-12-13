@@ -1,0 +1,288 @@
+---
+title: "Used_Car_Prices"
+author: "Laura Zhao & Karen Truong"
+date: "2023-11-13"
+output: html_document
+---
+# Create the regression model using labeled data
+
+## Read the data set into UsedCarPrices.
+```{r}
+UsedCarData <- read.csv("train_4.csv")
+```
+
+## Ensure the data set has been correctly read.
+```{r}
+head(UsedCarData)
+```
+
+## Filter the data set - remove rows with values that do not correspond to the preferences.
+```{r}
+# Only keep rows that have owner type as first
+UsedCarData <- subset(UsedCarData, UsedCarData$Owner_Type == "First")
+
+head(UsedCarData)
+
+```
+
+## Create dummy variables for the Location variable.
+```{r}
+#Uncomment if you need to download the "fastDummies" package
+#install.packages("fastDummies")
+library(fastDummies)
+data_with_dummies <- dummy_cols(UsedCarData, select_columns = "Location")
+UsedCarData <- cbind(UsedCarData, data_with_dummies)
+UsedCarData <- UsedCarData[16:39]
+
+#Check to see if the process was completed correctly
+head(UsedCarData)
+
+```
+
+
+## Create dummy variables for the Transmission and Fuel_Type variable.
+```{r}
+#Create dummy variables for the Transmission and Fuel_Type variable.
+UsedCarData$Transmission <- factor(UsedCarData$Transmission, levels = c("Automatic", "Manual"), labels = c(0,1))
+UsedCarData$Fuel_Type <- factor(UsedCarData$Fuel_Type, levels = c("Diesel", "Petrol"), labels = c(0,1))
+
+#Check to see if the process was completed correctly
+head(UsedCarData)
+```
+
+
+## Clean the data by removing characters and turning data into numerical values.
+```{r}
+#Remove characters from variables that have units stored in their values
+UsedCarData$Mileage <- as.integer(gsub("[^0-9]", "", UsedCarData$Mileage))
+UsedCarData$Engine <- as.integer(gsub("[^0-9]", "", UsedCarData$Engine))
+UsedCarData$Power <- as.integer(gsub("[^0-9]", "", UsedCarData$Power))
+UsedCarData$New_Price <- as.integer(gsub("[^0-9]", "", UsedCarData$New_Price))
+
+#Turn dummy variables into integers
+UsedCarData$Transmission = as.numeric(UsedCarData$Transmission) - 1
+UsedCarData$Fuel_Type = as.numeric(UsedCarData$Fuel_Type) -1
+
+#Check to see if the process was completed correctly
+head(UsedCarData)
+```
+
+## Remove variables we won't use in our model.
+```{r}
+#These values are the same for every car in our current data set, so we can exclude it from the regression.
+UsedCarData$Owner_Type <- NULL
+
+#Remove the New_Price variable because there are too many null values which will impact our results.
+UsedCarData$New_Price <- NULL
+
+#Remove variables that won't be used in the linear regression
+UsedCarData$Location <- NULL
+UsedCarData$Name <- NULL
+
+#Check to see if the process was completed correctly
+head(UsedCarData)
+```
+
+## Remove predictor variables with high correlations.
+```{r}
+#Visualize the relationship between all the variables with a correlation matrix
+library("corrplot")
+corrplot(cor(UsedCarData[, 1:20]), method="number")
+plot(UsedCarData[, 1:20])
+plot(UsedCarData$Year, UsedCarData$Price, pch=20)
+abline(lm(UsedCarData$Price ~ UsedCarData$Year))
+abline(lm(UsedCarData$Price ~ UsedCarData$Year))
+```
+Since none of the variables need to be removed, we can proceed with the linear regression model.
+
+## Create the regression model
+```{r}
+#Create the regression model
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Ahmedabad + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore + UsedCarData$Location_Delhi + UsedCarData$Location_Hyderabad + UsedCarData$Location_Jaipur + UsedCarData$Location_Kochi + UsedCarData$Location_Kolkata + UsedCarData$Location_Mumbai + UsedCarData$Location_Pune + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+There are several insignificant variables.
+Thus, we should rerun the model and remove these variables one by one to see if they still remain insignificant.
+
+
+```{r}
+#Start by removing the most insignificant values, which would be Location_Jaipur.
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Ahmedabad + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore + UsedCarData$Location_Delhi + UsedCarData$Location_Hyderabad  + UsedCarData$Location_Kochi + UsedCarData$Location_Kolkata + UsedCarData$Location_Mumbai + UsedCarData$Location_Pune + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+
+```{r}
+#Remove Location_Pune.
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Ahmedabad + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore + UsedCarData$Location_Delhi + UsedCarData$Location_Hyderabad  + UsedCarData$Location_Kochi + UsedCarData$Location_Kolkata + UsedCarData$Location_Mumbai + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+```{r}
+#Remove Location_Kochi
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Ahmedabad + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore + UsedCarData$Location_Delhi + UsedCarData$Location_Hyderabad + UsedCarData$Location_Kolkata + UsedCarData$Location_Mumbai + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+```{r}
+#Remove Location_Delhi
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Ahmedabad + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore  + UsedCarData$Location_Hyderabad + UsedCarData$Location_Kolkata + UsedCarData$Location_Mumbai + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+```{r}
+#Remove Location_Ahmedabad
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore  + UsedCarData$Location_Hyderabad + UsedCarData$Location_Kolkata + UsedCarData$Location_Mumbai + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+```{r}
+#Remove Location_Mumbai
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Kilometers_Driven + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore  + UsedCarData$Location_Hyderabad + UsedCarData$Location_Kolkata + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+```{r}
+#Remove Kilometers_Driven
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Bangalore + UsedCarData$Location_Chennai + UsedCarData$Location_Coimbatore  + UsedCarData$Location_Hyderabad + UsedCarData$Location_Kolkata + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+```{r}
+#Remove Location_Chennai
+regModel <- lm(UsedCarData$Price ~ UsedCarData$Year + UsedCarData$Mileage + UsedCarData$Engine + UsedCarData$Power + UsedCarData$Seats + UsedCarData$Location_Bangalore + UsedCarData$Location_Coimbatore  + UsedCarData$Location_Hyderabad + UsedCarData$Location_Kolkata + UsedCarData$Transmission + UsedCarData$Fuel_Type)
+
+#Get the summary statistics
+summary(regModel)
+```
+
+Now, all remaining variables are significant.
+
+## Create testing and training sets
+```{r}
+#Get the number of data points in the data set
+num_samples = dim(UsedCarData)[1]
+
+#Set the training set size to 80%
+sampling.rate = 0.8
+
+#Randomly select which data points will be included in the data set
+training <- sample(1:num_samples, sampling.rate * num_samples, replace=FALSE)
+
+#Define the training set with the selected training data points
+trainingSet <- subset(UsedCarData[training, ])
+
+#The remaining data will form the testing set
+testing <- setdiff(1:num_samples, training)
+
+#Define the testing set with the selected testing data points
+testingSet <- subset(UsedCarData[testing, ])
+
+head(testingSet)
+```
+
+## Create predictions for used car prices.
+```{r}
+#Fit a model for the training set
+regModel <- lm(Price ~ Year + Mileage + Engine + Power + Seats + Location_Bangalore + Location_Coimbatore  + Location_Hyderabad + Location_Kolkata + Transmission + Fuel_Type, data=trainingSet)
+
+#Perform predictions for the testing set
+predictions <- predict(regModel, testingSet)
+
+#Display the results
+head(predictions)
+```
+## Evaluate the model by calculating error.
+```{r}
+#Calculate mse and remove all empty values within the error vector
+error = predictions - testingSet$Price
+any(is.na(error))
+mse <- mean(error^2, na.rm = TRUE)
+mse
+
+```
+
+# Predict used car prices.
+## Read in the unlabeled data to determine how well the model can react to and predict for new and unseen data
+```{r}
+#Read in the unlabeled data
+unlabeledData <- read.csv("unlabeled.csv")
+
+#Check that the data has been read in.
+head(unlabeledData)
+```
+## Clean the data
+```{r}
+#Create dummy variables for the Location variable.
+data_with_dummies <- dummy_cols(unlabeledData, select_columns = "Location")
+unlabeledData <- cbind(unlabeledData, data_with_dummies)
+# unlabeledData <- unlabeledData[16:39]
+
+#Create dummy variables
+unlabeledData$Transmission <- factor(unlabeledData$Transmission, levels = c("Automatic", "Manual"), labels = c(0,1))
+unlabeledData$Fuel_Type <- factor(unlabeledData$Fuel_Type, levels = c("Diesel", "Petrol"), labels = c(0,1))
+
+#Remove characters from variables that have units stored in their values
+unlabeledData$Mileage <- as.integer(gsub("[^0-9]", "", unlabeledData$Mileage))
+unlabeledData$Engine <- as.integer(gsub("[^0-9]", "", unlabeledData$Engine))
+unlabeledData$Power <- as.integer(gsub("[^0-9]", "", unlabeledData$Power))
+
+#Turn dummy variables into integers
+unlabeledData$Transmission = as.numeric(unlabeledData$Transmission) - 1
+unlabeledData$Fuel_Type = as.numeric(unlabeledData$Fuel_Type) - 1
+#These values are the same for every car in our current data set, so we can exclude it from the regression.
+unlabeledData$Owner_Type <- NULL
+
+#Remove the New_Price variable because there are too many null values which will impact our results.
+unlabeledData$New_Price <- NULL
+
+#Remove variables that won't be used in the linear regression
+unlabeledData$Location <- NULL
+unlabeledData$Name <- NULL
+
+# Check to see if the process was completed correctly
+head(unlabeledData)
+```
+
+## Perform the prediction with the linear regression model
+```{r}
+#Perform predictions for the unlabeled set
+predictionsOfPrice <- predict(regModel, unlabeledData)
+
+#Display the results
+head(predictions)
+```
+## Evaluate the model by calculating error.
+```{r}
+#Read in the unlabeled data answers
+truth <- read.csv("unlabeled_answers.csv")
+
+#Check that the data has been read in.
+head(truth)
+```
+
+```{r}
+#Calculate mse and remove all empty values within the error vector
+error = predictionsOfPrice - truth$Price
+any(is.na(error))
+mse <- mean(error^2, na.rm = TRUE)
+mse
+
+```
+
